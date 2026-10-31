@@ -102,8 +102,7 @@ crm/
 │           ├── views/                # 页面组件
 │           │   ├── login/            # 登录
 │           │   ├── system/           # 系统管理页面
-│           │   ├── crm/              # CRM 业务页面
-│           │   └── dashboard/        # 仪表盘
+│           │   └── crm/              # CRM 业务页面（含 dashboard、analysis）
 │           ├── components/           # 公共组件
 │           ├── composables/          # 组合式函数
 │           ├── stores/               # Pinia 状态
@@ -111,7 +110,7 @@ crm/
 │           ├── types/                # 类型定义
 │           └── utils/                # 工具函数
 │
-├── docs/                             # 设计文档
+├── docs/                             # 设计文档（截图可放 docs/images/）
 └── CLAUDE.md                         # 开发规范
 ```
 
@@ -158,15 +157,18 @@ mysql -uroot -p crm < platform-parent/platform-config/src/main/resources/db/crm.
 修改 `platform-parent/platform-config/src/main/resources/application-dev.yml`：
 
 ```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/crm?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+platform:
+  mysqldb:
+    url: jdbc:mysql://127.0.0.1:3306
+    urlArgs: ?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: your_password
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
+    server:
+      dbname: crm
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    # password: your_redis_password
 ```
 
 ### 3. 启动后端
@@ -205,7 +207,7 @@ npm run dev
 |-----------------------------------|-----------------------------------|
 | ![客户管理](docs/images/customer.png) | ![客户分析](docs/images/analysis.png) |
 
-> 截图位于 `docs/images/` 目录，可自行替换为自己的系统截图。
+> 截图可放在 `docs/images/` 目录（`login.png` / `dashboard.png` / `customer.png` / `analysis.png`）；仓库默认未附带截图，可自行补充后替换上表引用。
 
 ## 📚 核心机制
 

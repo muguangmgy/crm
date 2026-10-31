@@ -81,8 +81,8 @@ npm run preview
 ```
 platform-parent/
 ├── platform-common/          # 公共模块（全局依赖）
-│   └── com.base.common/
-│       ├── config/           # 配置类（Redis、MyBatis、WebMvc等）
+│   └── com.platform.common/
+│       ├── config/           # 配置类（Redis、MyBatis、FastDFS、线程池等）
 │       ├── constants/        # 常量
 │       ├── enums/            # 枚举
 │       ├── exception/        # 异常处理
@@ -94,18 +94,32 @@ platform-parent/
 │   └── resources/
 │       ├── application.yml
 │       ├── application-dev.yml
-│       └── application-prod.yml
+│       ├── application-prod.yml
+│       └── db/crm.sql        # 数据库初始化脚本
 │
 ├── platform-server/          # 业务服务模块
-│   └── com.platform/
+│   └── com.platform.server/
+│       ├── auth/             # 认证模块
 │       ├── system/           # 系统管理
 │       │   ├── user/         # 用户管理
 │       │   ├── role/         # 角色管理
 │       │   ├── menu/         # 菜单管理
 │       │   ├── dept/         # 部门管理
 │       │   ├── tenant/       # 租户管理
+│       │   ├── dicttype/     # 字典类型
+│       │   ├── dictdata/     # 字典数据
 │       │   └── log/          # 日志管理
-│       ├── auth/             # 认证模块
+│       ├── crm/              # CRM业务
+│       │   ├── customer/     # 客户/公海/联系人/跟进/标签
+│       │   ├── lead/         # 线索
+│       │   ├── opportunity/  # 商机
+│       │   ├── product/      # 产品
+│       │   ├── quote/        # 报价
+│       │   ├── contract/     # 合同
+│       │   ├── invoice/      # 发票
+│       │   ├── payment/      # 收款
+│       │   ├── analysis/     # 数据分析与仪表盘
+│       │   └── task/         # 定时任务
 │       └── common/           # 业务公共
 │           ├── context/      # 用户上下文
 │           ├── constants/    # 业务常量
@@ -296,15 +310,25 @@ public void saveUserWithRole(UserSaveDTO dto) {
 
 ### 7. API路径规范
 
-| 模块   | 路径前缀                 |
-|------|----------------------|
-| 认证   | `/api/auth`          |
-| 用户管理 | `/api/system/user`   |
-| 角色管理 | `/api/system/role`   |
-| 菜单管理 | `/api/system/menu`   |
-| 部门管理 | `/api/system/dept`   |
-| 租户管理 | `/api/system/tenant` |
-| 日志管理 | `/api/system/log`    |
+| 模块   | 路径前缀                   |
+|------|------------------------|
+| 认证   | `/api/auth`            |
+| 用户管理 | `/api/system/user`     |
+| 角色管理 | `/api/system/role`     |
+| 菜单管理 | `/api/system/menu`     |
+| 部门管理 | `/api/system/dept`     |
+| 租户管理 | `/api/system/tenant`   |
+| 字典管理 | `/api/system/dict`     |
+| 日志管理 | `/api/system/log`      |
+| 客户管理 | `/api/crm/customer`    |
+| 线索管理 | `/api/crm/lead`        |
+| 商机管理 | `/api/crm/opportunity` |
+| 产品管理 | `/api/crm/product`     |
+| 报价管理 | `/api/crm/quote`       |
+| 合同管理 | `/api/crm/contract`    |
+| 发票管理 | `/api/crm/invoice`     |
+| 收款管理 | `/api/crm/payment`     |
+| 数据分析 | `/api/crm/analysis`    |
 
 ### 8. 分页查询规范
 
@@ -357,13 +381,15 @@ public Result<PageVO<UserVO>> list(UserQueryDTO query) {
 | 阶段      | 内容                                | 状态    |
 |---------|-----------------------------------|-------|
 | Phase 1 | 用户登录、JWT Token、Token刷新、注销         | ✅ 已完成 |
-| Phase 2 | 用户管理CRUD                          | ✅ 已完成 |
-| Phase 2 | 角色管理CRUD                          | ✅ 已完成 |
-| Phase 2 | 菜单管理CRUD                          | ✅ 已完成 |
-| Phase 2 | 部门管理CRUD                          | ✅ 已完成 |
+| Phase 2 | 用户/角色/菜单/部门管理CRUD                 | ✅ 已完成 |
 | Phase 3 | 权限点管理、角色权限分配、租户管理、数据权限切面          | ✅ 已完成 |
 | Phase 4 | 登录日志、操作日志                         | ✅ 已完成 |
 | Phase 5 | 多租户业务规则完善（角色/部门/用户创建限制、租户继承、自动填充） | ✅ 已完成 |
+| CRM-1   | 客户管理（含公海池、联系人、跟进、标签）              | ✅ 已完成 |
+| CRM-2   | 产品管理                              | ✅ 已完成 |
+| CRM-3   | 线索管理、商机管理                         | ✅ 已完成 |
+| CRM-4   | 报价、合同、发票、收款管理                     | ✅ 已完成 |
+| CRM-5   | 数据分析（仪表盘并行查询、销售/客户/商机/合同分析、预警）   | ✅ 已完成 |
 
 ## 数据权限切面
 
@@ -481,15 +507,17 @@ List<UserVO> list = systemConverter.toUserVOList(userList);
 
 ```
 src/
-├── api/           # API请求模块（axios封装）
+├── api/           # API请求模块（axios封装，含 api/crm/）
 ├── components/    # 公共组件
-├── composables/   # 组合式函数（hooks）
+├── composables/   # 组合式函数（hooks，含 useAnalysisFilters）
 ├── directives/    # 自定义指令
 ├── router/        # 路由配置
 ├── stores/        # Pinia状态管理
-├── types/         # TypeScript类型定义
+├── types/         # TypeScript类型定义（含 types/crm/）
 ├── utils/         # 工具函数
-└── views/         # 页面组件
+└── views/
+    ├── system/    # 系统管理页面
+    └── crm/       # CRM业务页面（dashboard、analysis、客户/线索/商机等）
 ```
 
 **开发注意事项：**
