@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.platform</groupId>
+    <artifactId>platform-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>platform-parent</name>
+    <description>地下管网智能运维平台</description>
+
+    <modules>
+        <module>platform-config</module>
+        <module>platform-common</module>
+        <module>platform-server</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mysql.version>8.0.33</mysql.version>
+        <mybatis-plus.version>3.5.15</mybatis-plus.version>
+        <springdoc.version>2.5.0</springdoc.version>
+        <hutool.version>5.8.27</hutool.version>
+        <fastdfs.version>1.29</fastdfs.version>
+        <maven_compiler_plugin_version>3.11.0</maven_compiler_plugin_version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 项目内部模块 -->
+            <dependency>
+                <groupId>com.platform</groupId>
+                <artifactId>platform-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.platform</groupId>
+                <artifactId>platform-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- MySQL -->
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <!-- MyBatis-Plus -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- MyBatis-Plus JSqlParser (分页插件需要) -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- FastDFS (官方原始客户端，兼容 Spring Boot 3.x) -->
+            <dependency>
+                <groupId>org.csource</groupId>
+                <artifactId>fastdfs-client-java</artifactId>
+                <version>${fastdfs.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <!-- MapStruct -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>1.5.5.Final</version>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>0.12.5</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>0.12.5</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>0.12.5</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- Guava 缓存-->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>32.1.3-jre</version>
+            </dependency>
+
+            <dependency>
+                <groupId>nl.basjes.parse.useragent</groupId>
+                <artifactId>yauaa</artifactId>
+                <version>8.1.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Lombok - 全局 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <!-- 仓库配置 -->
+    <repositories>
+        <repository>
+            <id>fit2cloud</id>
+            <name>Fit2Cloud Repository</name>
+            <url>https://repository.fit2cloud.com/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven_compiler_plugin_version}</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+
+    <profiles>
+        <profile>
+            <!-- 本地开发环境 -->
+            <id>dev</id>
+            <properties>
+                <package.environment>dev</package.environment>
+                <env>dev</env>
+            </properties>
+        </profile>
+        <profile>
+            <!-- 生产环境 -->
+            <id>prod</id>
+            <properties>
+                <package.environment>prod</package.environment>
+                <env>prod</env>
+            </properties>
+        </profile>
+    </profiles>
+
+
+    <!--    <build>-->
+    <!--        <resources>-->
+    <!--            <resource>-->
+    <!--                <directory>src/main/resources</directory>-->
+    <!--                <excludes>-->
+    <!--                    <exclude>prod/*</exclude>-->
+    <!--                    <exclude>dev/*</exclude>-->
+    <!--                </excludes>-->
+    <!--            </resource>-->
+    <!--            <resource>-->
+    <!--                <directory>src/main/resources/${package.environment}</directory>-->
+    <!--            </resource>-->
+    <!--        </resources>-->
+
+
+    <!--        <finalName>${project.artifactId}</finalName>-->
+    <!--        <plugins>-->
+    <!--            <plugin>-->
+    <!--                <groupId>org.apache.maven.plugins</groupId>-->
+    <!--                <artifactId>maven-jar-plugin</artifactId>-->
+    <!--                <version>2.5</version>-->
+    <!--                <configuration>-->
+    <!--                    <archive>-->
+    <!--                        <addMavenDescriptor>true</addMavenDescriptor>-->
+    <!--                        <index>true</index>-->
+    <!--                        <manifest>-->
+    <!--                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
+    <!--                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
+    <!--                        </manifest>-->
+    <!--                    </archive>-->
+    <!--                </configuration>-->
+    <!--            </plugin>-->
+
+    <!--            &lt;!&ndash; 解压配置文件 &ndash;&gt;-->
+    <!--            <plugin>-->
+    <!--                <artifactId>maven-dependency-plugin</artifactId>-->
+    <!--                <version>2.8</version>-->
+    <!--                <executions>-->
+    <!--                    <execution>-->
+    <!--                        <id>unpack</id>-->
+    <!--                        <phase>package</phase>-->
+    <!--                        <goals>-->
+    <!--                            <goal>unpack</goal>-->
+    <!--                        </goals>-->
+    <!--                        <configuration>-->
+    <!--                            <artifactItems>-->
+    <!--                                <artifactItem>-->
+    <!--                                    <groupId>com.platform</groupId>-->
+    <!--                                    <artifactId>platform-parent</artifactId>-->
+    <!--                                    <version>${project.version}</version>-->
+    <!--                                    <outputDirectory>${project.build.directory}/scripts</outputDirectory>-->
+    <!--                                </artifactItem>-->
+    <!--                            </artifactItems>-->
+    <!--                        </configuration>-->
+    <!--                    </execution>-->
+    <!--                </executions>-->
+    <!--            </plugin>-->
+
+    <!--            <plugin>-->
+    <!--                <artifactId>maven-assembly-plugin</artifactId>-->
+    <!--                <configuration>-->
+    <!--                    <descriptors>-->
+    <!--                        <descriptor>src/main/resources/assembly/assembly.xml</descriptor>-->
+    <!--                    </descriptors>-->
+    <!--                </configuration>-->
+    <!--                <executions>-->
+    <!--                    <execution>-->
+    <!--                        <id>make-assembly</id>-->
+    <!--                        <phase>package</phase>-->
+    <!--                        <goals>-->
+    <!--                            <goal>single</goal>-->
+    <!--                        </goals>-->
+    <!--                    </execution>-->
+    <!--                </executions>-->
+    <!--            </plugin>-->
+    <!--        </plugins>-->
+
+    <!--    </build>-->
+
+
+</project>

@@ -1,0 +1,98 @@
+spring:
+  profiles:
+    active: dev
+  # Jackson日期格式化配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+  #文件上传大小限制
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  #数据源配置
+  datasource:
+    url: ${platform.${server.db}.url}/${platform.${server.db}.${server.name}.dbname}${platform.${server.db}.urlArgs}
+    username: ${platform.${server.db}.username}
+    password: ${platform.${server.db}.password}
+    driver-class-name: ${platform.${server.db}.driverClassName}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 600000 #1h
+      max-lifetime: 18000000 #5h
+      connection-timeout: 10000
+
+  # Redis配置（用于Token存储）
+  data:
+    redis:
+      database: ${platform.redis.database}
+      host: ${platform.redis.host}
+      port: ${platform.redis.port}
+      # password: ${platform.redis.password}
+      timeout: ${platform.redis.timeout}
+
+#Fastdfs配置
+fdfs:
+  enabled: ${platform.fdfs.enabled}
+  tracker-list: ${platform.fdfs.tracker-list}
+  web-url-prefix: ${platform.fdfs.web-url-prefix:}
+  http:
+    anti-steal-token: ${platform.fdfs.http.anti_steal_token}
+    secret-key: ${platform.fdfs.http.secret_key}
+  so-timeout: 1500
+  connect-timeout: 600
+  thumb-image:
+    width: 150
+    height: 150
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.platform.**.po
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 后管拦截器配置
+interceptor:
+  login:
+    #是否限制单点登录
+    single-login: false
+    #accessToken过期时间(分钟)
+    access-token-expire-time: 60
+    #refreshToken过期时间(天)
+    refresh-token-expire-time: 7
+    # 拦截路径
+    path-patterns:
+    # 排除路径
+    exclude-patterns:
+      - /api/auth/login
+      - /api/auth/captcha
+      - /api/auth/refresh
+      - /swagger-ui/**
+      - /swagger-ui.html
+      - /v3/api-docs/**
+      - /webjars/**
+      - /doc.html
+      - /swagger-resources/**
+
+springdoc:
+  openapi:
+    info:
+      title: "platform Platform API"
+      description: "地下管网智能运维平台接口文档"
+      version: "1.0.0"
+      contact:
+        name: "waynevip@foxmail.com"
+  swagger-ui:
+    #配置swagger-ui的访问路径
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    #配置作者和标题
+  group-configs: #分组配置,可配置多个分组
+    - group: 'platform-server'             #分组名称
+      paths-to-match: '/**'        #配置需要匹配的路径
+      packages-to-scan: com.platform

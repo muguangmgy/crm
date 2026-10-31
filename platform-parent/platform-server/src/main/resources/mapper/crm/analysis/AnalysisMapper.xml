@@ -1,0 +1,1035 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.analysis.mapper.AnalysisMapper">
+
+    <!-- 数据权限：分析查询由业务层写入 userId/deptId/scopeDeptIds -->
+    <!-- 商机状态：1进行中 2已成交 3已失败 -->
+    <sql id="scopeUserU">
+        <if test="userId != null"> AND u.id = #{userId} </if>
+        <if test="deptId != null"> AND u.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND u.dept_id IN (${scopeDeptIds}) </if>
+    </sql>
+    <sql id="scopeOwnerO">
+        <if test="userId != null"> AND o.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND o.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o.dept_id IN (${scopeDeptIds}) </if>
+    </sql>
+    <sql id="scopeOwnerCu">
+        <if test="userId != null"> AND cu.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND cu.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND cu.dept_id IN (${scopeDeptIds}) </if>
+    </sql>
+    <!-- 分布百分比分母：与外层同权限口径 -->
+    <sql id="scopeOwnerCuAll">
+        <if test="userId != null"> AND cu_all.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND cu_all.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND cu_all.dept_id IN (${scopeDeptIds}) </if>
+    </sql>
+    <sql id="scopeOwnerC">
+        <if test="userId != null"> AND c.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+    </sql>
+    <sql id="customerFilters">
+        <if test="customerType != null">
+            AND cu.customer_type = #{customerType}
+        </if>
+        <if test="industry != null and industry != ''">
+            AND cu.industry = #{industry}
+        </if>
+        <if test="province != null and province != ''">
+            AND cu.province LIKE CONCAT('%', #{province}, '%')
+        </if>
+    </sql>
+    <sql id="customerFiltersCuAll">
+        <if test="customerType != null">
+            AND cu_all.customer_type = #{customerType}
+        </if>
+        <if test="industry != null and industry != ''">
+            AND cu_all.industry = #{industry}
+        </if>
+        <if test="province != null and province != ''">
+            AND cu_all.province LIKE CONCAT('%', #{province}, '%')
+        </if>
+    </sql>
+    <!-- 商机时间：区间内创建，或区间内成交/失败关闭 -->
+    <sql id="oppDateFilterO">
+        <if test="startDate != null and endDate != null">
+            AND (
+                DATE(o.create_time) BETWEEN #{startDate} AND #{endDate}
+                OR (o.status IN (2, 3) AND o.close_date BETWEEN #{startDate} AND #{endDate})
+            )
+        </if>
+    </sql>
+    <sql id="oppDateFilterO2">
+        <if test="startDate != null and endDate != null">
+            AND (
+                DATE(o2.create_time) BETWEEN #{startDate} AND #{endDate}
+                OR (o2.status IN (2, 3) AND o2.close_date BETWEEN #{startDate} AND #{endDate})
+            )
+        </if>
+    </sql>
+    <sql id="oppDateFilterO3">
+        <if test="startDate != null and endDate != null">
+            AND (
+                DATE(o3.create_time) BETWEEN #{startDate} AND #{endDate}
+                OR (o3.status IN (2, 3) AND o3.close_date BETWEEN #{startDate} AND #{endDate})
+            )
+        </if>
+    </sql>
+    <!-- 合同时间：按创建日期（收款进度等） -->
+    <sql id="contractDateFilterC">
+        <if test="startDate != null and endDate != null">
+            AND DATE(c.create_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
+    </sql>
+    <!-- 合同执行：创建/签约/结束任一落在区间，避免历史创建但本期内到期的合同被漏掉 -->
+    <sql id="contractExecutionDateFilterC">
+        <if test="startDate != null and endDate != null">
+            AND (
+                DATE(c.create_time) BETWEEN #{startDate} AND #{endDate}
+                OR (c.sign_date IS NOT NULL AND DATE(c.sign_date) BETWEEN #{startDate} AND #{endDate})
+                OR (c.end_date IS NOT NULL AND DATE(c.end_date) BETWEEN #{startDate} AND #{endDate})
+            )
+        </if>
+    </sql>
+    <!-- ALL 数据权限时 TenantLine 会跳过，分析报表需显式按登录租户隔离 -->
+    <sql id="tenantU"><if test="tenantId != null"> AND u.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantD"><if test="tenantId != null"> AND d.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantO"><if test="tenantId != null"> AND o.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantO2"><if test="tenantId != null"> AND o2.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantO3"><if test="tenantId != null"> AND o3.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantOAll"><if test="tenantId != null"> AND o_all.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantC"><if test="tenantId != null"> AND c.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantCAll"><if test="tenantId != null"> AND c_all.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantCu"><if test="tenantId != null"> AND cu.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantCuAll"><if test="tenantId != null"> AND cu_all.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantS"><if test="tenantId != null"> AND s.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantPr"><if test="tenantId != null"> AND pr.tenant_id = #{tenantId} </if></sql>
+    <sql id="tenantPlain"><if test="tenantId != null"> AND tenant_id = #{tenantId} </if></sql>
+
+    <!-- ========== 销售业绩 ========== -->
+
+    <!-- 销售员业绩统计：商机/合同/客户分离子查询，避免多表 LEFT JOIN 笛卡尔积放大金额 -->
+    <select id="selectSalesPerformance" resultType="com.platform.server.crm.analysis.vo.SalesPerformanceVO">
+        SELECT
+            u.id AS userId,
+            u.user_name AS userName,
+            d.dept_name AS deptName,
+            COALESCE(o.dealCount, 0) AS dealCount,
+            COALESCE(o.dealAmount, 0) AS dealAmount,
+            COALESCE(c.contractCount, 0) AS contractCount,
+            COALESCE(c.contractAmount, 0) AS contractAmount,
+            COALESCE(pay.receivedAmount, 0) AS receivedAmount,
+            COALESCE(cu.newCustomerCount, 0) AS newCustomerCount
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON u.dept_id = d.id
+        LEFT JOIN (
+            SELECT
+                owner_id,
+                COUNT(*) AS dealCount,
+                SUM(actual_amount) AS dealAmount
+            FROM crm_opportunity
+            WHERE status = 2
+            <include refid="tenantPlain"/>
+            <if test="startDate != null and endDate != null">
+                AND close_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY owner_id
+        ) o ON o.owner_id = u.id
+        LEFT JOIN (
+            SELECT
+                owner_id,
+                COUNT(*) AS contractCount,
+                SUM(contract_amount) AS contractAmount
+            FROM crm_contract
+            WHERE status = 3
+            <include refid="tenantPlain"/>
+            <if test="startDate != null and endDate != null">
+                AND DATE(create_time) BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY owner_id
+        ) c ON c.owner_id = u.id
+        LEFT JOIN (
+            SELECT
+                c.owner_id,
+                SUM(pr.payment_amount) AS receivedAmount
+            FROM crm_payment_record pr
+            INNER JOIN crm_contract c ON c.id = pr.contract_id
+            WHERE pr.status = 1
+            <include refid="tenantPr"/>
+            <include refid="tenantC"/>
+            <if test="startDate != null and endDate != null">
+                AND pr.payment_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY c.owner_id
+        ) pay ON pay.owner_id = u.id
+        LEFT JOIN (
+            SELECT
+                owner_id,
+                COUNT(*) AS newCustomerCount
+            FROM crm_customer
+            WHERE pool_type = 1
+            <include refid="tenantPlain"/>
+            <if test="startDate != null and endDate != null">
+                AND DATE(create_time) BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY owner_id
+        ) cu ON cu.owner_id = u.id
+        WHERE u.status = 1
+        <include refid="tenantU"/>
+        <include refid="scopeUserU"/>
+        ORDER BY dealAmount DESC
+    </select>
+
+    <!-- 团队业绩统计：同样分离子查询避免笛卡尔积 -->
+    <select id="selectTeamPerformance" resultType="com.platform.server.crm.analysis.vo.TeamPerformanceVO">
+        SELECT
+            d.id AS deptId,
+            d.dept_name AS deptName,
+            COALESCE(m.memberCount, 0) AS memberCount,
+            COALESCE(o.dealCount, 0) AS dealCount,
+            COALESCE(o.dealAmount, 0) AS dealAmount,
+            COALESCE(c.contractCount, 0) AS contractCount,
+            COALESCE(c.contractAmount, 0) AS contractAmount,
+            COALESCE(pay.receivedAmount, 0) AS receivedAmount,
+            COALESCE(cu.newCustomerCount, 0) AS newCustomerCount
+        FROM sys_dept d
+        LEFT JOIN (
+            SELECT dept_id, COUNT(*) AS memberCount
+            FROM sys_user
+            WHERE status = 1
+            GROUP BY dept_id
+        ) m ON m.dept_id = d.id
+        LEFT JOIN (
+            SELECT
+                u.dept_id,
+                COUNT(o.id) AS dealCount,
+                SUM(o.actual_amount) AS dealAmount
+            FROM crm_opportunity o
+            INNER JOIN sys_user u ON u.id = o.owner_id AND u.status = 1
+            WHERE o.status = 2
+            <include refid="tenantO"/>
+            <if test="userId != null"> AND o.owner_id = #{userId} </if>
+            <if test="startDate != null and endDate != null">
+                AND o.close_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY u.dept_id
+        ) o ON o.dept_id = d.id
+        LEFT JOIN (
+            SELECT
+                u.dept_id,
+                COUNT(c.id) AS contractCount,
+                SUM(c.contract_amount) AS contractAmount
+            FROM crm_contract c
+            INNER JOIN sys_user u ON u.id = c.owner_id AND u.status = 1
+            WHERE c.status = 3
+            <include refid="tenantC"/>
+            <if test="userId != null"> AND c.owner_id = #{userId} </if>
+            <if test="startDate != null and endDate != null">
+                AND DATE(c.create_time) BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY u.dept_id
+        ) c ON c.dept_id = d.id
+        LEFT JOIN (
+            SELECT
+                u.dept_id,
+                SUM(pr.payment_amount) AS receivedAmount
+            FROM crm_payment_record pr
+            INNER JOIN crm_contract c ON c.id = pr.contract_id
+            INNER JOIN sys_user u ON u.id = c.owner_id AND u.status = 1
+            WHERE pr.status = 1
+            <include refid="tenantPr"/>
+            <include refid="tenantC"/>
+            <if test="userId != null"> AND c.owner_id = #{userId} </if>
+            <if test="startDate != null and endDate != null">
+                AND pr.payment_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY u.dept_id
+        ) pay ON pay.dept_id = d.id
+        LEFT JOIN (
+            SELECT
+                u.dept_id,
+                COUNT(cu.id) AS newCustomerCount
+            FROM crm_customer cu
+            INNER JOIN sys_user u ON u.id = cu.owner_id AND u.status = 1
+            WHERE cu.pool_type = 1
+            <include refid="tenantCu"/>
+            <if test="userId != null"> AND cu.owner_id = #{userId} </if>
+            <if test="startDate != null and endDate != null">
+                AND DATE(cu.create_time) BETWEEN #{startDate} AND #{endDate}
+            </if>
+            GROUP BY u.dept_id
+        ) cu ON cu.dept_id = d.id
+        WHERE d.status = 1
+        <include refid="tenantD"/>
+        <if test="userId != null">
+            AND d.id = (SELECT dept_id FROM sys_user WHERE id = #{userId})
+        </if>
+        <if test="deptId != null">
+            AND (d.id = #{deptId} OR d.dept_path LIKE CONCAT('%/', #{deptId}, '/%') OR d.dept_path LIKE CONCAT('%/', #{deptId}))
+        </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''">
+            AND d.id IN (${scopeDeptIds})
+        </if>
+        ORDER BY dealAmount DESC
+    </select>
+
+    <!-- 业绩趋势：成交 + 收款 + 新增客户按周期汇总 -->
+    <select id="selectSalesTrend" resultType="com.platform.server.crm.analysis.vo.SalesTrendVO">
+        SELECT
+            t.period,
+            SUM(t.dealAmount) AS dealAmount,
+            SUM(t.contractAmount) AS contractAmount,
+            SUM(t.receivedAmount) AS receivedAmount,
+            SUM(t.newCustomerCount) AS newCustomerCount,
+            SUM(t.dealCount) AS dealCount
+        FROM (
+            SELECT
+                <choose>
+                    <when test="timeDimension == 'YEAR'">
+                        DATE_FORMAT(o.close_date, '%Y')
+                    </when>
+                    <when test="timeDimension == 'QUARTER'">
+                        CONCAT(YEAR(o.close_date), '-Q', QUARTER(o.close_date))
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(o.close_date, '%Y-%m')
+                    </otherwise>
+                </choose> AS period,
+                SUM(CASE WHEN o.status = 2 THEN o.actual_amount ELSE 0 END) AS dealAmount,
+                0 AS contractAmount,
+                0 AS receivedAmount,
+                0 AS newCustomerCount,
+                COUNT(CASE WHEN o.status = 2 THEN 1 END) AS dealCount
+            FROM crm_opportunity o
+            WHERE o.close_date IS NOT NULL
+            <include refid="tenantO"/>
+            <if test="startDate != null and endDate != null">
+                AND o.close_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            <include refid="scopeOwnerO"/>
+            GROUP BY period
+
+            UNION ALL
+
+            SELECT
+                <choose>
+                    <when test="timeDimension == 'YEAR'">
+                        DATE_FORMAT(pr.payment_date, '%Y')
+                    </when>
+                    <when test="timeDimension == 'QUARTER'">
+                        CONCAT(YEAR(pr.payment_date), '-Q', QUARTER(pr.payment_date))
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(pr.payment_date, '%Y-%m')
+                    </otherwise>
+                </choose> AS period,
+                0 AS dealAmount,
+                0 AS contractAmount,
+                SUM(pr.payment_amount) AS receivedAmount,
+                0 AS newCustomerCount,
+                0 AS dealCount
+            FROM crm_payment_record pr
+            LEFT JOIN crm_contract c ON c.id = pr.contract_id
+            WHERE pr.status = 1
+                AND pr.payment_date IS NOT NULL
+            <include refid="tenantPr"/>
+            <include refid="tenantC"/>
+            <if test="startDate != null and endDate != null">
+                AND pr.payment_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            <if test="userId != null"> AND c.owner_id = #{userId} </if>
+            <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+            <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+            GROUP BY period
+
+            UNION ALL
+
+            SELECT
+                <choose>
+                    <when test="timeDimension == 'YEAR'">
+                        DATE_FORMAT(cu.create_time, '%Y')
+                    </when>
+                    <when test="timeDimension == 'QUARTER'">
+                        CONCAT(YEAR(cu.create_time), '-Q', QUARTER(cu.create_time))
+                    </when>
+                    <otherwise>
+                        DATE_FORMAT(cu.create_time, '%Y-%m')
+                    </otherwise>
+                </choose> AS period,
+                0 AS dealAmount,
+                0 AS contractAmount,
+                0 AS receivedAmount,
+                COUNT(cu.id) AS newCustomerCount,
+                0 AS dealCount
+            FROM crm_customer cu
+            WHERE cu.pool_type = 1
+                AND cu.create_time IS NOT NULL
+            <include refid="tenantCu"/>
+            <if test="startDate != null and endDate != null">
+                AND DATE(cu.create_time) BETWEEN #{startDate} AND #{endDate}
+            </if>
+            <include refid="scopeOwnerCu"/>
+            GROUP BY period
+        ) t
+        WHERE t.period IS NOT NULL
+        GROUP BY t.period
+        ORDER BY t.period ASC
+    </select>
+
+    <!-- 业绩排名：分离子查询避免笛卡尔积 -->
+    <select id="selectSalesRanking" resultType="com.platform.server.crm.analysis.vo.SalesRankingVO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY dealAmount DESC) AS rankNum,
+            userId,
+            userName,
+            deptName,
+            dealAmount,
+            dealCount,
+            receivedAmount
+        FROM (
+            SELECT
+                u.id AS userId,
+                u.user_name AS userName,
+                d.dept_name AS deptName,
+                COALESCE(o.dealAmount, 0) AS dealAmount,
+                COALESCE(o.dealCount, 0) AS dealCount,
+                COALESCE(c.receivedAmount, 0) AS receivedAmount
+            FROM sys_user u
+            LEFT JOIN sys_dept d ON u.dept_id = d.id
+            LEFT JOIN (
+                SELECT
+                    owner_id,
+                    COUNT(*) AS dealCount,
+                    SUM(actual_amount) AS dealAmount
+                FROM crm_opportunity
+                WHERE status = 2
+                <include refid="tenantPlain"/>
+                <if test="startDate != null and endDate != null">
+                    AND close_date BETWEEN #{startDate} AND #{endDate}
+                </if>
+                GROUP BY owner_id
+            ) o ON o.owner_id = u.id
+            LEFT JOIN (
+                SELECT
+                    c.owner_id,
+                    SUM(pr.payment_amount) AS receivedAmount
+                FROM crm_payment_record pr
+                INNER JOIN crm_contract c ON c.id = pr.contract_id
+                WHERE pr.status = 1
+                <include refid="tenantPr"/>
+                <include refid="tenantC"/>
+                <if test="startDate != null and endDate != null">
+                    AND pr.payment_date BETWEEN #{startDate} AND #{endDate}
+                </if>
+                GROUP BY c.owner_id
+            ) c ON c.owner_id = u.id
+            WHERE u.status = 1
+            <include refid="tenantU"/>
+            <include refid="scopeUserU"/>
+        ) t
+        ORDER BY rankNum ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- ========== 客户分析 ========== -->
+
+    <!-- 按行业分布 -->
+    <select id="selectCustomerDistributionByIndustry" resultType="com.platform.server.crm.analysis.vo.CustomerDistributionVO">
+        SELECT
+            'industry' AS dimension,
+            cu.industry AS value,
+            COUNT(cu.id) AS customerCount,
+            ROUND(COUNT(cu.id) * 100.0 / NULLIF((
+                SELECT COUNT(cu_all.id) FROM crm_customer cu_all
+                WHERE cu_all.pool_type = 1
+                    AND cu_all.industry IS NOT NULL
+                    AND cu_all.industry != ''
+                <include refid="tenantCuAll"/>
+                <include refid="scopeOwnerCuAll"/>
+                <include refid="customerFiltersCuAll"/>
+            ), 0), 2) AS percentage
+        FROM crm_customer cu
+        WHERE cu.pool_type = 1
+            AND cu.industry IS NOT NULL
+            AND cu.industry != ''
+        <include refid="tenantCu"/>
+        <include refid="scopeOwnerCu"/>
+        <include refid="customerFilters"/>
+        GROUP BY cu.industry
+        ORDER BY customerCount DESC
+    </select>
+
+    <!-- 按地区分布 -->
+    <select id="selectCustomerDistributionByRegion" resultType="com.platform.server.crm.analysis.vo.CustomerDistributionVO">
+        SELECT
+            'region' AS dimension,
+            cu.province AS value,
+            COUNT(cu.id) AS customerCount,
+            ROUND(COUNT(cu.id) * 100.0 / NULLIF((
+                SELECT COUNT(cu_all.id) FROM crm_customer cu_all
+                WHERE cu_all.pool_type = 1
+                    AND cu_all.province IS NOT NULL
+                    AND cu_all.province != ''
+                <include refid="tenantCuAll"/>
+                <include refid="scopeOwnerCuAll"/>
+                <include refid="customerFiltersCuAll"/>
+            ), 0), 2) AS percentage
+        FROM crm_customer cu
+        WHERE cu.pool_type = 1
+            AND cu.province IS NOT NULL
+            AND cu.province != ''
+        <include refid="tenantCu"/>
+        <include refid="scopeOwnerCu"/>
+        <include refid="customerFilters"/>
+        GROUP BY cu.province
+        ORDER BY customerCount DESC
+    </select>
+
+    <!-- 按等级分布 -->
+    <select id="selectCustomerDistributionByLevel" resultType="com.platform.server.crm.analysis.vo.CustomerDistributionVO">
+        SELECT
+            'level' AS dimension,
+            CASE cu.level WHEN 1 THEN '普通' WHEN 2 THEN '重要' WHEN 3 THEN 'VIP' ELSE '未知' END AS value,
+            COUNT(cu.id) AS customerCount,
+            ROUND(COUNT(cu.id) * 100.0 / NULLIF((
+                SELECT COUNT(cu_all.id) FROM crm_customer cu_all
+                WHERE cu_all.pool_type = 1
+                    AND cu_all.level IS NOT NULL
+                <include refid="tenantCuAll"/>
+                <include refid="scopeOwnerCuAll"/>
+                <include refid="customerFiltersCuAll"/>
+            ), 0), 2) AS percentage
+        FROM crm_customer cu
+        WHERE cu.pool_type = 1
+            AND cu.level IS NOT NULL
+        <include refid="tenantCu"/>
+        <include refid="scopeOwnerCu"/>
+        <include refid="customerFilters"/>
+        GROUP BY cu.level
+        ORDER BY cu.level DESC
+    </select>
+
+    <!-- 客户价值分析：合同与商机分离子查询，避免金额被商机数放大 -->
+    <select id="selectCustomerValue" resultType="com.platform.server.crm.analysis.vo.CustomerValueVO">
+        SELECT
+            cu.id AS customerId,
+            cu.customer_name AS customerName,
+            cu.customer_type AS customerType,
+            u.user_name AS ownerName,
+            COALESCE(c.totalContractAmount, 0) AS totalContractAmount,
+            COALESCE(c.totalReceivedAmount, 0) AS totalReceivedAmount,
+            COALESCE(c.contractCount, 0) AS contractCount,
+            COALESCE(o.opportunityCount, 0) AS opportunityCount,
+            c.firstDealTime,
+            c.lastDealTime
+        FROM crm_customer cu
+        LEFT JOIN sys_user u ON u.id = cu.owner_id
+        LEFT JOIN (
+            SELECT
+                customer_id,
+                SUM(contract_amount) AS totalContractAmount,
+                SUM(received_amount) AS totalReceivedAmount,
+                COUNT(*) AS contractCount,
+                MIN(create_time) AS firstDealTime,
+                MAX(create_time) AS lastDealTime
+            FROM crm_contract
+            WHERE status = 3
+            <include refid="tenantPlain"/>
+            GROUP BY customer_id
+        ) c ON c.customer_id = cu.id
+        LEFT JOIN (
+            SELECT customer_id, COUNT(*) AS opportunityCount
+            FROM crm_opportunity
+            WHERE 1 = 1
+            <include refid="tenantPlain"/>
+            GROUP BY customer_id
+        ) o ON o.customer_id = cu.id
+        WHERE cu.pool_type = 1
+        <include refid="tenantCu"/>
+        <include refid="scopeOwnerCu"/>
+        <include refid="customerFilters"/>
+        ORDER BY totalContractAmount DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!--
+      客户活跃度：只认跟进记录
+      高活跃 <=7天；中活跃 8-30天；低活跃 31-90天；
+      不活跃：有跟进且 >90天；未跟进：无任何跟进记录
+    -->
+    <select id="selectCustomerActivity" resultType="com.platform.server.crm.analysis.vo.CustomerActivityVO">
+        SELECT
+            activityLevel,
+            COUNT(customer_id) AS customerCount,
+            ROUND(COUNT(customer_id) * 100.0 / NULLIF((
+                SELECT COUNT(cu_all.id) FROM crm_customer cu_all
+                WHERE cu_all.pool_type = 1
+                <include refid="tenantCuAll"/>
+                <include refid="scopeOwnerCuAll"/>
+                <include refid="customerFiltersCuAll"/>
+            ), 0), 2) AS percentage,
+            ROUND(AVG(follow_count), 0) AS avgFollowCount,
+            ROUND(AVG(days_gap), 0) AS avgDaysSinceLastFollow
+        FROM (
+            SELECT
+                cu.id AS customer_id,
+                COUNT(f.id) AS follow_count,
+                DATEDIFF(NOW(), MAX(f.create_time)) AS days_gap,
+                CASE
+                    WHEN COUNT(f.id) = 0 THEN 'NEVER'
+                    WHEN DATEDIFF(NOW(), MAX(f.create_time)) &lt;= 7 THEN 'HIGH'
+                    WHEN DATEDIFF(NOW(), MAX(f.create_time)) &lt;= 30 THEN 'MEDIUM'
+                    WHEN DATEDIFF(NOW(), MAX(f.create_time)) &lt;= 90 THEN 'LOW'
+                    ELSE 'INACTIVE'
+                END AS activityLevel
+            FROM crm_customer cu
+            LEFT JOIN crm_customer_follow f ON f.customer_id = cu.id
+            WHERE cu.pool_type = 1
+            <include refid="tenantCu"/>
+            <include refid="scopeOwnerCu"/>
+            <include refid="customerFilters"/>
+            GROUP BY cu.id
+        ) t
+        GROUP BY activityLevel
+        ORDER BY FIELD(activityLevel, 'HIGH', 'MEDIUM', 'LOW', 'INACTIVE', 'NEVER')
+    </select>
+
+    <!-- 流失预警列表 -->
+    <select id="selectChurnWarningList" resultType="com.platform.server.crm.analysis.vo.ChurnWarningVO">
+        SELECT
+            cu.id AS customerId,
+            cu.customer_name AS customerName,
+            cu.customer_type AS customerType,
+            cu.owner_id AS ownerId,
+            u.user_name AS ownerName,
+            d.dept_name AS deptName,
+            MAX(f.create_time) AS lastFollowTime,
+            DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) AS daysSinceLastFollow,
+            SUM(c.contract_amount) AS totalContractAmount,
+            CASE
+                WHEN DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) &gt;= 90 THEN 'HIGH'
+                WHEN DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) &gt;= 60 THEN 'MEDIUM'
+                ELSE 'LOW'
+            END AS warningLevel
+        FROM crm_customer cu
+        LEFT JOIN crm_customer_follow f ON f.customer_id = cu.id
+        LEFT JOIN crm_contract c ON c.customer_id = cu.id AND c.status = 3
+            <if test="tenantId != null"> AND c.tenant_id = #{tenantId} </if>
+        LEFT JOIN sys_user u ON u.id = cu.owner_id
+        LEFT JOIN sys_dept d ON d.id = u.dept_id
+        WHERE cu.pool_type = 1
+        <include refid="tenantCu"/>
+        <include refid="scopeOwnerCu"/>
+        <include refid="customerFilters"/>
+        GROUP BY cu.id, cu.customer_name, cu.customer_type, cu.owner_id, cu.create_time, u.user_name, d.dept_name
+        HAVING DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) &gt;= 30
+        ORDER BY daysSinceLastFollow DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 流失预警数量 -->
+    <select id="selectChurnWarningCount" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM (
+            SELECT cu.id
+            FROM crm_customer cu
+            LEFT JOIN crm_customer_follow f ON f.customer_id = cu.id
+            WHERE cu.pool_type = 1
+            <include refid="tenantCu"/>
+            <include refid="scopeOwnerCu"/>
+            <include refid="customerFilters"/>
+            GROUP BY cu.id, cu.create_time
+            HAVING DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) &gt;= 30
+        ) t
+    </select>
+
+    <!-- ========== 商机分析 ========== -->
+
+    <!-- 销售漏斗分析：进行中 + 已成交 + 已失败（支持时间/负责人/部门筛选） -->
+    <select id="selectSalesFunnel" resultType="com.platform.server.crm.analysis.vo.SalesFunnelVO">
+        SELECT
+            s.id AS stageId,
+            s.stage_name AS stageName,
+            s.sort AS stageOrder,
+            COUNT(o.id) AS opportunityCount,
+            SUM(o.expected_amount) AS opportunityAmount,
+            ROUND(SUM(o.expected_amount) * 100.0 / NULLIF((
+                SELECT SUM(o_all.expected_amount)
+                FROM crm_opportunity o_all
+                WHERE o_all.status IN (1, 2, 3)
+                <include refid="tenantOAll"/>
+                <if test="userId != null"> AND o_all.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND o_all.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o_all.dept_id IN (${scopeDeptIds}) </if>
+                <if test="startDate != null and endDate != null">
+                    AND (
+                        DATE(o_all.create_time) BETWEEN #{startDate} AND #{endDate}
+                        OR (o_all.status IN (2, 3) AND o_all.close_date BETWEEN #{startDate} AND #{endDate})
+                    )
+                </if>
+            ), 0), 2) AS percentage,
+            s.probability AS probability
+        FROM crm_opportunity_stage s
+        LEFT JOIN crm_opportunity o ON o.stage_id = s.id AND o.status IN (1, 2, 3)
+            <if test="tenantId != null"> AND o.tenant_id = #{tenantId} </if>
+            <if test="userId != null"> AND o.owner_id = #{userId} </if>
+            <if test="deptId != null"> AND o.dept_id = #{deptId} </if>
+            <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o.dept_id IN (${scopeDeptIds}) </if>
+            <include refid="oppDateFilterO"/>
+        WHERE s.status = 1
+        <include refid="tenantS"/>
+        GROUP BY s.id, s.stage_name, s.sort, s.probability
+        ORDER BY s.sort ASC
+    </select>
+
+    <!--
+      阶段推进分析（无流转历史时的近似口径）：
+      enterCount = 当前阶段商机数
+      exitCount  = 更后阶段商机数
+      conversionRate = exitCount / (enterCount + exitCount) * 100  （推进率）
+      avgStayDays = 当前阶段商机距上次更新的平均天数
+    -->
+    <select id="selectConversionRate" resultType="com.platform.server.crm.analysis.vo.ConversionRateVO">
+        SELECT
+            s.id AS stageId,
+            s.stage_name AS stageName,
+            s.sort AS stageOrder,
+            COUNT(o.id) AS enterCount,
+            (
+                SELECT COUNT(o2.id)
+                FROM crm_opportunity o2
+                INNER JOIN crm_opportunity_stage s2 ON s2.id = o2.stage_id
+                WHERE o2.status IN (1, 2)
+                  AND s2.sort &gt; s.sort
+                  AND s2.status = 1
+                <include refid="tenantO2"/>
+                <if test="tenantId != null"> AND s2.tenant_id = #{tenantId} </if>
+                <if test="userId != null"> AND o2.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND o2.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o2.dept_id IN (${scopeDeptIds}) </if>
+                <include refid="oppDateFilterO2"/>
+            ) AS exitCount,
+            ROUND((
+                SELECT COUNT(o2.id)
+                FROM crm_opportunity o2
+                INNER JOIN crm_opportunity_stage s2 ON s2.id = o2.stage_id
+                WHERE o2.status IN (1, 2)
+                  AND s2.sort &gt; s.sort
+                  AND s2.status = 1
+                <include refid="tenantO2"/>
+                <if test="tenantId != null"> AND s2.tenant_id = #{tenantId} </if>
+                <if test="userId != null"> AND o2.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND o2.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o2.dept_id IN (${scopeDeptIds}) </if>
+                <include refid="oppDateFilterO2"/>
+            ) * 100.0 / NULLIF((
+                COUNT(o.id) + (
+                    SELECT COUNT(o3.id)
+                    FROM crm_opportunity o3
+                    INNER JOIN crm_opportunity_stage s3 ON s3.id = o3.stage_id
+                    WHERE o3.status IN (1, 2)
+                      AND s3.sort &gt; s.sort
+                      AND s3.status = 1
+                    <include refid="tenantO3"/>
+                    <if test="tenantId != null"> AND s3.tenant_id = #{tenantId} </if>
+                    <if test="userId != null"> AND o3.owner_id = #{userId} </if>
+                    <if test="deptId != null"> AND o3.dept_id = #{deptId} </if>
+                    <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o3.dept_id IN (${scopeDeptIds}) </if>
+                    <include refid="oppDateFilterO3"/>
+                )
+            ), 0), 2) AS conversionRate,
+            ROUND(AVG(CASE WHEN o.id IS NOT NULL THEN DATEDIFF(NOW(), o.update_time) END), 0) AS avgStayDays
+        FROM crm_opportunity_stage s
+        LEFT JOIN crm_opportunity o ON o.stage_id = s.id AND o.status IN (1, 2)
+            <if test="tenantId != null"> AND o.tenant_id = #{tenantId} </if>
+            <if test="userId != null"> AND o.owner_id = #{userId} </if>
+            <if test="deptId != null"> AND o.dept_id = #{deptId} </if>
+            <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND o.dept_id IN (${scopeDeptIds}) </if>
+            <include refid="oppDateFilterO"/>
+        WHERE s.status = 1
+        <include refid="tenantS"/>
+        GROUP BY s.id, s.stage_name, s.sort
+        ORDER BY s.sort ASC
+    </select>
+
+    <!--
+      成交预测：
+      - 高/中/低概率金额、预测成交额、商机数：仅统计进行中商机（管道）
+      - 已成交金额：按 close_date 落在查询区间内的已成交商机
+      避免把已成交单算进“高概率预测”，也避免日期过滤把预期成交在区间外的在途商机整批丢掉
+    -->
+    <select id="selectDealPrediction" resultType="com.platform.server.crm.analysis.vo.DealPredictionVO">
+        SELECT
+            '管道预测' AS period,
+            SUM(CASE WHEN o.status = 1 AND s.probability &gt;= 70 THEN o.expected_amount ELSE 0 END) AS highProbabilityAmount,
+            SUM(CASE WHEN o.status = 1 AND s.probability BETWEEN 30 AND 69 THEN o.expected_amount ELSE 0 END) AS mediumProbabilityAmount,
+            SUM(CASE WHEN o.status = 1 AND s.probability &lt; 30 THEN o.expected_amount ELSE 0 END) AS lowProbabilityAmount,
+            SUM(CASE WHEN o.status = 1 THEN o.expected_amount * s.probability / 100 ELSE 0 END) AS predictedAmount,
+            COUNT(CASE WHEN o.status = 1 THEN o.id END) AS opportunityCount,
+            SUM(CASE WHEN o.status = 2
+                <if test="startDate != null and endDate != null">
+                    AND o.close_date BETWEEN #{startDate} AND #{endDate}
+                </if>
+                THEN COALESCE(o.actual_amount, o.expected_amount, 0) ELSE 0 END) AS closedAmount
+        FROM crm_opportunity o
+        LEFT JOIN crm_opportunity_stage s ON s.id = o.stage_id
+        WHERE o.status IN (1, 2)
+        <include refid="tenantO"/>
+        <include refid="scopeOwnerO"/>
+    </select>
+
+    <!-- ========== 合同收款分析 ========== -->
+
+    <!-- 合同执行分析：时间按创建/签约/结束任一落区间，避免历史合同在本期内到期被漏掉 -->
+    <select id="selectContractExecution" resultType="com.platform.server.crm.analysis.vo.ContractExecutionVO">
+        SELECT
+            CASE c.status
+                WHEN 1 THEN 'DRAFT'
+                WHEN 2 THEN 'APPROVING'
+                WHEN 3 THEN 'EFFECTIVE'
+                WHEN 4 THEN 'EXPIRED'
+                WHEN 5 THEN 'TERMINATED'
+            END AS status,
+            CASE c.status
+                WHEN 1 THEN '草稿'
+                WHEN 2 THEN '审批中'
+                WHEN 3 THEN '生效'
+                WHEN 4 THEN '到期'
+                WHEN 5 THEN '终止'
+            END AS statusName,
+            COUNT(c.id) AS contractCount,
+            SUM(c.contract_amount) AS contractAmount,
+            ROUND(SUM(c.contract_amount) * 100.0 / NULLIF((
+                SELECT SUM(c_all.contract_amount)
+                FROM crm_contract c_all
+                WHERE 1 = 1
+                <include refid="tenantCAll"/>
+                <if test="userId != null"> AND c_all.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND c_all.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c_all.dept_id IN (${scopeDeptIds}) </if>
+                <if test="startDate != null and endDate != null">
+                    AND (
+                        DATE(c_all.create_time) BETWEEN #{startDate} AND #{endDate}
+                        OR (c_all.sign_date IS NOT NULL AND DATE(c_all.sign_date) BETWEEN #{startDate} AND #{endDate})
+                        OR (c_all.end_date IS NOT NULL AND DATE(c_all.end_date) BETWEEN #{startDate} AND #{endDate})
+                    )
+                </if>
+            ), 0), 2) AS percentage,
+            SUM(CASE WHEN c.status = 3 AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30 THEN 1 ELSE 0 END) AS expiringCount,
+            SUM(CASE WHEN c.status IN (3, 4) AND c.end_date &lt; NOW() AND c.received_amount &lt; c.contract_amount THEN 1 ELSE 0 END) AS expiredNotTerminatedCount
+        FROM crm_contract c
+        WHERE 1 = 1
+        <include refid="tenantC"/>
+        <include refid="scopeOwnerC"/>
+        <include refid="contractExecutionDateFilterC"/>
+        GROUP BY c.status
+        ORDER BY c.status ASC
+    </select>
+
+    <!-- 应收账款分析 -->
+    <select id="selectReceivableAnalysis" resultType="com.platform.server.crm.analysis.vo.ReceivableAnalysisVO">
+        SELECT
+            aging_bucket AS agingRange,
+            aging_name AS agingRangeName,
+            SUM(pending_amount) AS receivableAmount,
+            COUNT(DISTINCT contract_id) AS contractCount,
+            ROUND(SUM(pending_amount) * 100.0 / NULLIF((
+                SELECT SUM(c_all.contract_amount - c_all.received_amount)
+                FROM crm_contract c_all
+                WHERE c_all.status = 3 AND c_all.contract_amount &gt; c_all.received_amount
+                <include refid="tenantCAll"/>
+                <if test="userId != null"> AND c_all.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND c_all.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c_all.dept_id IN (${scopeDeptIds}) </if>
+                <if test="startDate != null and endDate != null">
+                    AND DATE(c_all.create_time) BETWEEN #{startDate} AND #{endDate}
+                </if>
+            ), 0), 2) AS percentage,
+            risk_level AS riskLevel
+        FROM (
+            SELECT
+                c.id AS contract_id,
+                c.contract_amount - c.received_amount AS pending_amount,
+                CASE
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 30 THEN '0-30'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 60 THEN '31-60'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 90 THEN '61-90'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 180 THEN '91-180'
+                    ELSE '180+'
+                END AS aging_bucket,
+                CASE
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 30 THEN '0-30天'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 60 THEN '31-60天'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 90 THEN '61-90天'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 180 THEN '91-180天'
+                    ELSE '180天以上'
+                END AS aging_name,
+                CASE
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 30 THEN 'LOW'
+                    WHEN DATEDIFF(NOW(), COALESCE(MIN(pp.plan_date), c.end_date)) &lt;= 90 THEN 'MEDIUM'
+                    ELSE 'HIGH'
+                END AS risk_level
+            FROM crm_contract c
+            LEFT JOIN crm_payment_plan pp ON pp.contract_id = c.id AND pp.received_status = 0 AND pp.plan_date &lt; NOW()
+            WHERE c.status = 3
+                AND c.contract_amount &gt; c.received_amount
+            <include refid="tenantC"/>
+            <include refid="scopeOwnerC"/>
+            <include refid="contractDateFilterC"/>
+            GROUP BY c.id, c.contract_amount, c.received_amount, c.end_date
+        ) t
+        GROUP BY aging_bucket, aging_name, risk_level
+        ORDER BY FIELD(aging_bucket, '0-30', '31-60', '61-90', '91-180', '180+')
+    </select>
+
+    <!-- 收款进度分析 -->
+    <select id="selectPaymentProgress" resultType="com.platform.server.crm.analysis.vo.PaymentProgressVO">
+        SELECT
+            c.id AS contractId,
+            c.contract_no AS contractNo,
+            cu.customer_name AS customerName,
+            c.contract_amount AS contractAmount,
+            c.received_amount AS receivedAmount,
+            ROUND(c.received_amount * 100.0 / NULLIF(c.contract_amount, 0), 2) AS progressRate,
+            c.contract_amount - c.received_amount AS pendingAmount,
+            SUM(CASE WHEN pp.received_status = 0 AND pp.plan_date &lt; NOW() THEN pp.plan_amount ELSE 0 END) AS overdueAmount,
+            MIN(CASE WHEN pp.received_status = 0 THEN DATE_FORMAT(pp.plan_date, '%Y-%m-%d') END) AS nextPaymentDate,
+            CASE
+                WHEN c.received_amount &gt;= c.contract_amount THEN 'COMPLETED'
+                WHEN SUM(CASE WHEN pp.received_status = 0 AND pp.plan_date &lt; NOW() THEN 1 ELSE 0 END) &gt; 0 THEN 'OVERDUE'
+                ELSE 'NORMAL'
+            END AS paymentStatus
+        FROM crm_contract c
+        LEFT JOIN crm_customer cu ON cu.id = c.customer_id
+        LEFT JOIN crm_payment_plan pp ON pp.contract_id = c.id
+        WHERE c.status = 3
+        <include refid="tenantC"/>
+        <include refid="scopeOwnerC"/>
+        <include refid="contractDateFilterC"/>
+        GROUP BY c.id, c.contract_no, cu.customer_name, c.contract_amount, c.received_amount
+        ORDER BY progressRate ASC
+    </select>
+
+    <!-- ========== 仪表盘 ========== -->
+
+    <!-- 仪表盘汇总数据 -->
+    <select id="selectDashboardSummary" resultType="com.platform.server.crm.analysis.mapper.AnalysisMapper$DashboardSummaryVO">
+        SELECT
+            (SELECT COUNT(id) FROM crm_customer
+             WHERE pool_type = 1 AND DATE(create_time) BETWEEN #{startDate} AND #{endDate}
+             <include refid="tenantPlain"/>
+             <if test="userId != null"> AND owner_id = #{userId} </if>
+             <if test="deptId != null"> AND dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND dept_id IN (${scopeDeptIds}) </if>
+            ) AS newCustomerCount,
+            (SELECT SUM(COALESCE(actual_amount, expected_amount, 0)) FROM crm_opportunity
+             WHERE status = 2 AND close_date BETWEEN #{startDate} AND #{endDate}
+             <include refid="tenantPlain"/>
+             <if test="userId != null"> AND owner_id = #{userId} </if>
+             <if test="deptId != null"> AND dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND dept_id IN (${scopeDeptIds}) </if>
+            ) AS dealAmount,
+            (SELECT SUM(pr.payment_amount) FROM crm_payment_record pr
+             LEFT JOIN crm_contract c ON c.id = pr.contract_id
+             WHERE pr.status = 1 AND pr.payment_date BETWEEN #{startDate} AND #{endDate}
+             <include refid="tenantPr"/>
+             <include refid="tenantC"/>
+             <if test="userId != null"> AND c.owner_id = #{userId} </if>
+             <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+            ) AS receivedAmount,
+            (SELECT COUNT(DISTINCT cu.id) FROM crm_customer cu
+             WHERE cu.pool_type = 1
+             AND cu.next_follow_time IS NOT NULL
+             AND cu.next_follow_time &lt;= NOW()
+             <include refid="tenantCu"/>
+             <if test="userId != null"> AND cu.owner_id = #{userId} </if>
+             <if test="deptId != null"> AND cu.dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND cu.dept_id IN (${scopeDeptIds}) </if>
+            ) AS pendingFollowCount,
+            (SELECT COUNT(id) FROM crm_contract
+             WHERE status = 3 AND DATEDIFF(end_date, NOW()) BETWEEN 0 AND #{days}
+             <include refid="tenantPlain"/>
+             <if test="userId != null"> AND owner_id = #{userId} </if>
+             <if test="deptId != null"> AND dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND dept_id IN (${scopeDeptIds}) </if>
+            ) AS expiringContractCount,
+            (SELECT COUNT(DISTINCT pp.contract_id) FROM crm_payment_plan pp
+             LEFT JOIN crm_contract c ON c.id = pp.contract_id
+             WHERE c.status = 3 AND pp.received_status = 0 AND pp.plan_date &lt; NOW()
+             <include refid="tenantC"/>
+             <if test="userId != null"> AND c.owner_id = #{userId} </if>
+             <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+             <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+            ) AS overduePaymentCount,
+            (SELECT COUNT(1) FROM (
+                SELECT cu.id
+                FROM crm_customer cu
+                LEFT JOIN crm_customer_follow f ON f.customer_id = cu.id
+                WHERE cu.pool_type = 1
+                <include refid="tenantCu"/>
+                <if test="userId != null"> AND cu.owner_id = #{userId} </if>
+                <if test="deptId != null"> AND cu.dept_id = #{deptId} </if>
+                <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND cu.dept_id IN (${scopeDeptIds}) </if>
+                GROUP BY cu.id, cu.create_time
+                HAVING DATEDIFF(NOW(), COALESCE(MAX(f.create_time), cu.create_time)) &gt;= 30
+             ) churn_t) AS churnWarningCount
+    </select>
+
+    <!-- 即将到期合同 -->
+    <select id="selectExpiringContracts" resultType="com.platform.server.crm.analysis.vo.DashboardVO$ExpiringContractVO">
+        SELECT
+            c.id AS contractId,
+            c.contract_no AS contractNo,
+            cu.customer_name AS customerName,
+            c.contract_amount AS contractAmount,
+            c.end_date AS endDate,
+            DATEDIFF(c.end_date, NOW()) AS daysToExpire,
+            u.user_name AS ownerName
+        FROM crm_contract c
+        LEFT JOIN crm_customer cu ON cu.id = c.customer_id
+        LEFT JOIN sys_user u ON u.id = c.owner_id
+        WHERE c.status = 3
+            AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND #{days}
+        <include refid="tenantC"/>
+        <if test="userId != null"> AND c.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+        ORDER BY c.end_date ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 逾期收款 -->
+    <select id="selectOverduePayments" resultType="com.platform.server.crm.analysis.vo.DashboardVO$OverduePaymentVO">
+        SELECT
+            c.id AS contractId,
+            c.contract_no AS contractNo,
+            cu.customer_name AS customerName,
+            pp.plan_amount AS overdueAmount,
+            pp.plan_date AS planDate,
+            DATEDIFF(NOW(), pp.plan_date) AS overdueDays,
+            u.user_name AS ownerName
+        FROM crm_payment_plan pp
+        LEFT JOIN crm_contract c ON c.id = pp.contract_id
+        LEFT JOIN crm_customer cu ON cu.id = c.customer_id
+        LEFT JOIN sys_user u ON u.id = c.owner_id
+        WHERE c.status = 3
+            AND pp.received_status = 0
+            AND pp.plan_date &lt; NOW()
+        <include refid="tenantC"/>
+        <if test="userId != null"> AND c.owner_id = #{userId} </if>
+        <if test="deptId != null"> AND c.dept_id = #{deptId} </if>
+        <if test="scopeDeptIds != null and scopeDeptIds != ''"> AND c.dept_id IN (${scopeDeptIds}) </if>
+        ORDER BY pp.plan_date ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

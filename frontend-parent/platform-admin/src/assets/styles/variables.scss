@@ -1,0 +1,148 @@
+:root {
+  --primary-color: #409eff;
+  --primary-light: #667eea;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+  --info-color: #909399;
+
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --text-placeholder: #c0c4cc;
+
+  --bg-page: #f0f2f5;
+  --bg-component: #ffffff;
+  --bg-hover: #f5f7fa;
+  --bg-sidebar: #1d1e1f;
+
+  --border-color: #e8e8e8;
+  --border-light: #f0f0f0;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --sidebar-width: 200px;
+  --sidebar-collapsed-width: 64px;
+  --header-height: 60px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', platformo, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-page);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #909399;
+}
+
+.el-card {
+  border-radius: var(--radius-lg);
+}
+
+.el-table {
+  border-radius: var(--radius-md);
+
+  th.el-table__cell {
+    background: var(--bg-page);
+    font-weight: 500;
+  }
+}
+
+.el-dialog {
+  border-radius: var(--radius-lg);
+}
+
+.el-button {
+  border-radius: var(--radius-md);
+}
+
+.el-input__wrapper {
+  border-radius: var(--radius-md);
+}
+
+.el-message-box {
+  border-radius: var(--radius-lg);
+}
+
+// 搜索栏统一样式（适配search-card和toolbar-card两种命名）
+.search-card,
+.toolbar-card {
+  margin-bottom: 16px;
+
+  .el-card__body {
+    padding: 16px 20px !important;
+  }
+
+  .search-form,
+  .toolbar-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px;
+
+    .el-form-item {
+      margin-bottom: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    // 输入框和下拉框统一宽度
+    .el-input,
+    .el-select {
+      width: 180px;
+    }
+
+    // 日期选择器
+    .el-date-editor {
+      width: 200px;
+    }
+
+    // 树形选择器
+    .el-tree-select {
+      width: 200px;
+    }
+  }
+}
+
+// 分页统一样式
+.pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}

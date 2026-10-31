@@ -1,0 +1,96 @@
+# ========== 日志 ==========
+logs/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========== 前端 ==========
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env.local
+.env.*.local
+
+# TypeScript 增量构建
+*.tsbuildinfo
+
+# Vite 临时文件
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# 打包分析
+stats.html
+
+# ========== Java / Maven ==========
+# 编译输出
+target/
+build/
+*.class
+
+# 打包文件
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Spring Boot 重新打包后的原始文件
+*.original
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+
+# Maven 临时文件
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Java 堆转储 / 性能分析
+*.hprof
+*.heapdump
+
+# ========== IDE / 编辑器 ==========
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.history/
+*.sublime-workspace
+*.sublime-project
+
+# Claude / Superpowers
+.claude
+.superpowers
+
+# ========== 操作系统 ==========
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ========== 临时文件 ==========
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.pid
+*.seed
+*.pid.lock
+
+# ========== 其他 ==========
+HELP.md

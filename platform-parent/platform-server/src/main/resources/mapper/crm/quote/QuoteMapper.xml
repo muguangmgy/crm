@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.quote.mapper.QuoteMapper">
+
+    <!-- 报价单分页查询（关联客户、商机、负责人名称） -->
+    <select id="selectQuotePage" resultType="com.platform.server.crm.quote.vo.QuoteVO">
+        SELECT
+            q.id,
+            q.quote_no,
+            q.quote_name,
+            q.opportunity_id,
+            o.opp_name AS opportunity_name,
+            q.customer_id,
+            c.customer_name,
+            q.total_amount,
+            q.discount_rate,
+            q.final_amount,
+            q.status,
+            q.expire_date,
+            q.send_time,
+            q.accept_time,
+            q.remark,
+            q.owner_id,
+            u.user_name AS owner_name,
+            q.create_time,
+            q.update_time
+        FROM crm_quote q
+        LEFT JOIN crm_customer c ON q.customer_id = c.id
+        LEFT JOIN crm_opportunity o ON q.opportunity_id = o.id
+        LEFT JOIN sys_user u ON q.owner_id = u.id
+        WHERE 1=1
+        <if test="query.quoteName != null and query.quoteName != ''">
+            AND q.quote_name LIKE CONCAT('%', #{query.quoteName}, '%')
+        </if>
+        <if test="query.quoteNo != null and query.quoteNo != ''">
+            AND q.quote_no LIKE CONCAT('%', #{query.quoteNo}, '%')
+        </if>
+        <if test="query.opportunityId != null">
+            AND q.opportunity_id = #{query.opportunityId}
+        </if>
+        <if test="query.customerId != null">
+            AND q.customer_id = #{query.customerId}
+        </if>
+        <if test="query.status != null">
+            AND q.status = #{query.status}
+        </if>
+        <if test="query.ownerId != null">
+            AND q.owner_id = #{query.ownerId}
+        </if>
+        ORDER BY q.create_time DESC
+    </select>
+
+    <!-- 报价单详情查询（关联客户、商机、负责人名称） -->
+    <select id="selectQuoteById" resultType="com.platform.server.crm.quote.vo.QuoteVO">
+        SELECT
+            q.id,
+            q.quote_no,
+            q.quote_name,
+            q.opportunity_id,
+            o.opp_name AS opportunity_name,
+            q.customer_id,
+            c.customer_name,
+            q.total_amount,
+            q.discount_rate,
+            q.final_amount,
+            q.status,
+            q.expire_date,
+            q.send_time,
+            q.accept_time,
+            q.remark,
+            q.owner_id,
+            u.user_name AS owner_name,
+            q.create_time,
+            q.update_time
+        FROM crm_quote q
+        LEFT JOIN crm_customer c ON q.customer_id = c.id
+        LEFT JOIN crm_opportunity o ON q.opportunity_id = o.id
+        LEFT JOIN sys_user u ON q.owner_id = u.id
+        WHERE q.id = #{id}
+    </select>
+
+</mapper>

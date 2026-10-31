@@ -1,0 +1,7 @@
+server.port: 8081
+server.servlet.context-path: /
+spring.application.name: platform-server
+server.main: com.platform.server.PlatformApplication
+server.jvm: -Xmx1g -Xms128m
+server.db: mysqldb
+server.name: server

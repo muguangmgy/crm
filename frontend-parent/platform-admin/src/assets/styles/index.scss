@@ -1,0 +1,161 @@
+@use './variables.scss';
+
+@forward './variables.scss';
+
+// ============================================
+// 侧边栏菜单折叠状态图标居中（全局覆盖）
+// ============================================
+
+.el-menu--collapse {
+  --el-menu-base-level-padding: 0 !important;
+  --el-menu-level-padding: 0 !important;
+
+  // 隐藏所有菜单文字
+  .menu-text,
+  .el-sub-menu__title-text {
+    display: none !important;
+  }
+
+  // 图标居中
+  .menu-title-content {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .menu-icon {
+    margin: 0 !important;
+  }
+
+  .el-menu-item,
+  .el-sub-menu__title {
+    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+
+    .el-sub-menu__title-inner {
+      padding: 0 !important;
+      justify-content: center !important;
+      display: flex !important;
+      align-items: center !important;
+      width: 100% !important;
+    }
+  }
+
+  // 隐藏子菜单箭头
+  .el-sub-menu__icon-arrow {
+    display: none !important;
+  }
+}
+
+// ============================================
+// 侧边栏菜单弹出层深色主题（仅针对 .sidebar-popper 类）
+// ============================================
+
+body > .el-popper.sidebar-popper,
+.el-popper.sidebar-popper {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+
+  .el-menu {
+    background: #1a1a2e !important;
+    border: none !important;
+  }
+
+  .el-menu-item {
+    color: rgba(255, 255, 255, 0.85) !important;
+    background: transparent !important;
+    border-radius: 6px !important;
+    margin: 2px 4px !important;
+
+    &:hover {
+      background: rgba(64, 158, 255, 0.15) !important;
+      color: #fff !important;
+    }
+
+    &.is-active {
+      color: #409eff !important;
+      background: rgba(64, 158, 255, 0.25) !important;
+    }
+  }
+
+  .el-sub-menu__title {
+    color: rgba(255, 255, 255, 0.85) !important;
+    background: transparent !important;
+
+    &:hover {
+      background: rgba(64, 158, 255, 0.15) !important;
+    }
+  }
+
+  // 角色切换下拉菜单样式
+  .el-dropdown-menu {
+    background: #1a1a2e !important;
+    border: none !important;
+    padding: 4px 0 !important;
+
+    .el-dropdown-menu__item {
+      color: rgba(255, 255, 255, 0.85) !important;
+      background-color: transparent !important;
+      border-radius: 6px !important;
+      margin: 2px 4px !important;
+      padding: 8px 12px !important;
+
+      &:hover,
+      &:focus {
+        background-color: rgba(64, 158, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+      }
+    }
+  }
+}
+
+// 全局覆盖 el-dropdown-menu__item hover 状态
+.el-popper.sidebar-popper .el-dropdown-menu__item:hover,
+.el-popper.sidebar-popper .el-dropdown-menu__item:focus,
+body > .el-popper.sidebar-popper .el-dropdown-menu__item:hover {
+  background-color: rgba(64, 158, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+// ============================================
+// 表格固定列表头背景色统一
+// ============================================
+
+// Element Plus 固定列表头 - 需要与普通表头颜色一致
+// 包含各种滚动状态下的样式覆盖
+.el-table .el-table__header-wrapper tr th.el-table-fixed-column--right,
+.el-table .el-table__header-wrapper tr th.el-table-fixed-column--left,
+.el-table .el-table__body-wrapper tr th.el-table-fixed-column--right,
+.el-table .el-table__body-wrapper tr th.el-table-fixed-column--left,
+.el-table.is-scrolling-none th.el-table-fixed-column--right,
+.el-table.is-scrolling-none th.el-table-fixed-column--left,
+.el-table.is-scrolling-left th.el-table-fixed-column--right,
+.el-table.is-scrolling-right th.el-table-fixed-column--left {
+  background-color: #f0f2f5 !important;
+}
+
+// ============================================
+// 表格边框颜色调整，增加与表头对比度
+// ============================================
+
+.el-table {
+  // 表头单元格边框
+  .el-table__header-wrapper .el-table__header th.el-table__cell {
+    border-right-color: #dcdfe6 !important;
+    border-bottom-color: #dcdfe6 !important;
+  }
+
+  // 表体单元格边框
+  .el-table__body-wrapper .el-table__body td.el-table__cell {
+    border-right-color: #ebeef5 !important;
+    border-bottom-color: #ebeef5 !important;
+  }
+
+  // 表格整体边框
+  border-color: #dcdfe6 !important;
+}

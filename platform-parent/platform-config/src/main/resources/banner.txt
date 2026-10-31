@@ -1,0 +1,11 @@
+${AnsiColor.GREEN}
+ ███████     ███████   ██████     ███████   ██████████
+░██░░░░██   ██░░░░░██ ░█░░░░██   ██░░░░░██ ░░░░░██░░░
+░██   ░██  ██     ░░██░█   ░██  ██     ░░██    ░██
+░███████  ░██      ░██░██████  ░██      ░██    ░██
+░██░░░██  ░██      ░██░█░░░░ ██░██      ░██    ░██
+░██  ░░██ ░░██     ██ ░█    ░██░░██     ██     ░██
+░██   ░░██ ░░███████  ░███████  ░░███████      ░██
+░░     ░░   ░░░░░░░   ░░░░░░░    ░░░░░░░       ░░
+${AnsiColor.BRIGHT_GREEN}:: platform Platform :: ${AnsiColor.CYAN}Powered by Spring Boot
+${AnsiColor.BRIGHT_YELLOW}Developer Email: waynevip@foxmail.com | platform: https://www.platformai.com${AnsiColor.DEFAULT}

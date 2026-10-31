@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.system.role.mapper.SysRoleMapper">
+
+    <select id="getUserRoles" resultType="com.platform.server.system.role.po.SysRole">
+        SELECT r.*
+        FROM sys_role r
+        LEFT JOIN
+        sys_user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        order by r.data_scope
+    </select>
+
+    <select id="getRoleById" resultType="com.platform.server.system.role.po.SysRole">
+        select *
+        from sys_role
+        where id = #{id}
+    </select>
+</mapper>

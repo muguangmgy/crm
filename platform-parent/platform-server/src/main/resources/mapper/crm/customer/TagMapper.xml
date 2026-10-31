@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.customer.mapper.TagMapper">
+
+    <select id="selectByTenantId" resultType="com.platform.server.crm.customer.po.CrmCustomerTag">
+        SELECT *
+        FROM crm_customer_tag
+        WHERE status = 1
+        ORDER BY sort ASC
+    </select>
+
+    <select id="selectByCustomerId" resultType="com.platform.server.crm.customer.po.CrmCustomerTag">
+        SELECT t.*
+        FROM crm_customer_tag t
+        INNER JOIN crm_customer_tag_rel r ON t.id = r.tag_id
+        WHERE r.customer_id = #{customerId}
+        ORDER BY t.sort ASC
+    </select>
+
+</mapper>

@@ -1,0 +1,48 @@
+#系统公共配置
+spring:
+  active: prod
+
+# 生产环境关闭API文档
+springdoc:
+  api-docs:
+    enabled: false
+
+platform:
+  mysqldb:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306
+    urlArgs: ?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+    server:
+      dbname: crm
+
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    # password: platform@redis
+    timeout: 10000ms
+
+  fdfs:
+    enabled: true
+    tracker-list: 127.0.0.1:22122
+    # FastDFS文件访问地址前缀
+    web-url-prefix: /
+    http:
+      anti_steal_token: true
+      secret_key: fastDfsplatform.com
+
+  #logback日志配置
+  log:
+    #日志输出根目录,默认是与工程评级的logs目录
+    path: /home/platform/logs
+    #单个日志最大大小
+    size: 100MB
+    #累计日志文件大小
+    total-size: 5GB
+    #日志保留天数
+    days: 30
+    #控制台输入日志级别，生产推荐error
+    console-level: info

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.system.user.mapper.SysUserMapper">
+
+    <select id="selectUserPage" resultType="com.platform.server.system.user.vo.UserVO">
+        SELECT u.id, u.user_code, u.user_name, u.email, u.phone, u.avatar, u.gender, u.status,
+        u.dept_id, d.dept_name, u.create_time, u.last_login_time
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON u.dept_id = d.id
+        WHERE 1=1
+        <if test="query.userCode != null and query.userCode != ''">
+            AND u.user_code LIKE CONCAT('%', #{query.userCode}, '%')
+        </if>
+        <if test="query.userName != null and query.userName != ''">
+            AND u.user_name LIKE CONCAT('%', #{query.userName}, '%')
+        </if>
+        <if test="query.phone != null and query.phone != ''">
+            AND u.phone LIKE CONCAT('%', #{query.phone}, '%')
+        </if>
+        <if test="query.status != null">
+            AND u.status = #{query.status}
+        </if>
+        <if test="query.createTimeStart != null">
+            AND u.create_time &gt;= #{query.createTimeStart}
+        </if>
+        <if test="query.createTimeEnd != null">
+            AND u.create_time &lt;= #{query.createTimeEnd}
+        </if>
+        ORDER BY u.create_time DESC
+    </select>
+
+    <select id="selectUserById" resultType="com.platform.server.system.user.vo.UserVO">
+        SELECT u.id,
+        u.user_code,
+        u.user_name,
+        u.email,
+        u.phone,
+        u.avatar,
+        u.gender,
+        u.status,
+        u.dept_id,
+        d.dept_name,
+        u.create_time,
+        u.last_login_time
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON u.dept_id = d.id
+        WHERE u.id = #{id}
+    </select>
+
+    <select id="selectById" resultType="com.platform.server.system.user.po.SysUser">
+        SELECT *
+        FROM sys_user
+        WHERE id = #{id}
+    </select>
+
+</mapper>

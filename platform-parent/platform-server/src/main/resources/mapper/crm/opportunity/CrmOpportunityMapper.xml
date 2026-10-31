@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.opportunity.mapper.CrmOpportunityMapper">
+
+    <!-- 商机列表查询（关联客户、联系人、负责人） -->
+    <select id="selectOpportunityPage" resultType="com.platform.server.crm.opportunity.vo.OpportunityVO">
+        SELECT
+            o.id,
+            o.opp_no,
+            o.opp_name,
+            o.customer_id,
+            c.customer_name,
+            o.contact_id,
+            cc.contact_name,
+            o.stage_id,
+            o.stage_name,
+            o.probability,
+            o.expected_amount,
+            o.actual_amount,
+            o.expected_date,
+            o.close_date,
+            o.source,
+            o.status,
+            o.owner_id,
+            u.user_name AS owner_name,
+            o.winner_quote_id,
+            q.quote_no AS winner_quote_no,
+            q.quote_name AS winner_quote_name,
+            o.description,
+            o.remark,
+            o.create_time,
+            o.update_time
+        FROM crm_opportunity o
+        LEFT JOIN crm_customer c ON o.customer_id = c.id
+        LEFT JOIN crm_customer_contact cc ON o.contact_id = cc.id
+        LEFT JOIN sys_user u ON o.owner_id = u.id
+        LEFT JOIN crm_quote q ON o.winner_quote_id = q.id
+        WHERE 1=1
+        <if test="query.oppName != null and query.oppName != ''">
+            AND o.opp_name LIKE CONCAT('%', #{query.oppName}, '%')
+        </if>
+        <if test="query.customerId != null">
+            AND o.customer_id = #{query.customerId}
+        </if>
+        <if test="query.stageId != null">
+            AND o.stage_id = #{query.stageId}
+        </if>
+        <if test="query.status != null">
+            AND o.status = #{query.status}
+        </if>
+        <if test="query.ownerId != null">
+            AND o.owner_id = #{query.ownerId}
+        </if>
+        <if test="query.source != null and query.source != ''">
+            AND o.source = #{query.source}
+        </if>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <!-- 商机详情查询 -->
+    <select id="selectOpportunityById" resultType="com.platform.server.crm.opportunity.vo.OpportunityVO">
+        SELECT
+            o.id,
+            o.opp_no,
+            o.opp_name,
+            o.customer_id,
+            c.customer_name,
+            o.contact_id,
+            cc.contact_name,
+            o.stage_id,
+            o.stage_name,
+            o.probability,
+            o.expected_amount,
+            o.actual_amount,
+            o.expected_date,
+            o.close_date,
+            o.source,
+            o.status,
+            o.owner_id,
+            u.user_name AS owner_name,
+            o.winner_quote_id,
+            q.quote_no AS winner_quote_no,
+            q.quote_name AS winner_quote_name,
+            o.description,
+            o.remark,
+            o.create_time,
+            o.update_time
+        FROM crm_opportunity o
+        LEFT JOIN crm_customer c ON o.customer_id = c.id
+        LEFT JOIN crm_customer_contact cc ON o.contact_id = cc.id
+        LEFT JOIN sys_user u ON o.owner_id = u.id
+        LEFT JOIN crm_quote q ON o.winner_quote_id = q.id
+        WHERE o.id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.customer.mapper.CustomerMapper">
+
+    <!-- 私有池客户分页查询 -->
+    <select id="selectPrivatePoolPage" resultType="com.platform.server.crm.customer.vo.CustomerVO">
+        SELECT c.id, c.customer_no, c.customer_type, c.customer_name, c.industry, c.company_size,
+        c.province, c.city, c.address, c.website, c.gender, c.birthday, c.occupation,
+        c.phone, c.email, c.source, c.level, c.status, c.pool_type, c.owner_id, c.dept_id,
+        c.lock_time, c.next_follow_time, c.remark, c.create_time, c.update_time,
+        u.user_name as owner_name, d.dept_name
+        FROM crm_customer c
+        LEFT JOIN sys_user u ON c.owner_id = u.id
+        LEFT JOIN sys_dept d ON c.dept_id = d.id
+        WHERE c.pool_type = 1
+        <if test="query.customerName != null and query.customerName != ''">
+            AND c.customer_name LIKE CONCAT('%', #{query.customerName}, '%')
+        </if>
+        <if test="query.customerType != null">
+            AND c.customer_type = #{query.customerType}
+        </if>
+        <if test="query.level != null">
+            AND c.level = #{query.level}
+        </if>
+        <if test="query.status != null">
+            AND c.status = #{query.status}
+        </if>
+        <if test="query.industry != null and query.industry != ''">
+            AND c.industry LIKE CONCAT('%', #{query.industry}, '%')
+        </if>
+        <if test="query.province != null and query.province != ''">
+            AND c.province LIKE CONCAT('%', #{query.province}, '%')
+        </if>
+        <if test="query.source != null and query.source != ''">
+            AND c.source LIKE CONCAT('%', #{query.source}, '%')
+        </if>
+        <if test="query.ownerId != null">
+            AND c.owner_id = #{query.ownerId}
+        </if>
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 公海池客户分页查询 -->
+    <select id="selectPublicPoolPage" resultType="com.platform.server.crm.customer.vo.CustomerVO">
+        SELECT c.id, c.customer_no, c.customer_type, c.customer_name, c.industry, c.company_size,
+        c.province, c.city, c.address, c.website, c.gender, c.birthday, c.occupation,
+        c.phone, c.email, c.source, c.level, c.status, c.pool_type, c.dept_id,
+        c.lock_time, c.next_follow_time, c.remark, c.create_time, c.update_time,
+        d.dept_name
+        FROM crm_customer c
+        LEFT JOIN sys_dept d ON c.dept_id = d.id
+        WHERE c.pool_type = 2
+        <if test="query.customerName != null and query.customerName != ''">
+            AND c.customer_name LIKE CONCAT('%', #{query.customerName}, '%')
+        </if>
+        <if test="query.customerType != null">
+            AND c.customer_type = #{query.customerType}
+        </if>
+        <if test="query.level != null">
+            AND c.level = #{query.level}
+        </if>
+        <if test="query.industry != null and query.industry != ''">
+            AND c.industry LIKE CONCAT('%', #{query.industry}, '%')
+        </if>
+        <if test="query.province != null and query.province != ''">
+            AND c.province LIKE CONCAT('%', #{query.province}, '%')
+        </if>
+        ORDER BY c.update_time DESC
+    </select>
+
+    <!-- 客户详情查询 -->
+    <select id="selectCustomerById" resultType="com.platform.server.crm.customer.vo.CustomerVO">
+        SELECT c.id,
+               c.customer_no,
+               c.customer_type,
+               c.customer_name,
+               c.industry,
+               c.company_size,
+               c.province,
+               c.city,
+               c.address,
+               c.website,
+               c.gender,
+               c.birthday,
+               c.occupation,
+               c.phone,
+               c.email,
+               c.source,
+               c.level,
+               c.status,
+               c.pool_type,
+               c.owner_id,
+               c.dept_id,
+               c.lock_time,
+               c.next_follow_time,
+               c.remark,
+               c.create_time,
+               c.update_time,
+               u.user_name as owner_name,
+               d.dept_name
+        FROM crm_customer c
+                 LEFT JOIN sys_user u ON c.owner_id = u.id
+                 LEFT JOIN sys_dept d ON c.dept_id = d.id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 统计负责人私有池客户数量 -->
+    <select id="countByOwner" resultType="int">
+        SELECT COUNT(*)
+        FROM crm_customer
+        WHERE owner_id = #{ownerId}
+          AND pool_type = 1
+    </select>
+
+    <!-- 查询需要自动释放的客户 -->
+    <select id="selectNeedRelease" resultType="com.platform.server.crm.customer.po.CrmCustomer">
+        SELECT c.*
+        FROM crm_customer c
+        WHERE c.pool_type = 1
+            AND c.lock_time IS NOT NULL
+            AND (SELECT MAX(f.create_time) FROM crm_customer_follow f WHERE f.customer_id = c.id) IS NULL
+           OR (SELECT MAX(f.create_time) FROM crm_customer_follow f WHERE f.customer_id = c.id) &lt;
+              DATE_SUB(NOW(), INTERVAL #{noFollowDays} DAY)
+    </select>
+
+</mapper>

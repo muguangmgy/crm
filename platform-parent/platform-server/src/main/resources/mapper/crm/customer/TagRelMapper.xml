@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.customer.mapper.TagRelMapper">
+
+    <delete id="deleteByCustomerId">
+        DELETE FROM crm_customer_tag_rel WHERE customer_id = #{customerId}
+    </delete>
+
+    <insert id="batchInsert">
+        INSERT INTO crm_customer_tag_rel (customer_id, tag_id) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.customerId}, #{item.tagId})
+        </foreach>
+    </insert>
+
+    <select id="selectTagIdsByCustomerId" resultType="java.lang.Long">
+        SELECT tag_id FROM crm_customer_tag_rel WHERE customer_id = #{customerId}
+    </select>
+
+</mapper>

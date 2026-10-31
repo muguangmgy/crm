@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.server.crm.lead.mapper.CrmLeadMapper">
+
+    <!-- 线索分页查询 -->
+    <select id="selectLeadPage" resultType="com.platform.server.crm.lead.vo.LeadVO">
+        SELECT l.id,
+        COALESCE(l.customer_id, o.customer_id) AS customer_id,
+        l.contact_id, l.lead_name, l.source, l.status,
+        l.phone, l.email, l.company, l.description, l.owner_id,
+        l.converted_time, l.converted_opp_id, l.create_time, l.update_time,
+        u.user_name as owner_name,
+        COALESCE(c.customer_name, oc.customer_name) AS customer_name,
+        cc.contact_name,
+        o.opp_name as converted_opp_name
+        FROM crm_lead l
+        LEFT JOIN sys_user u ON l.owner_id = u.id
+        LEFT JOIN crm_opportunity o ON l.converted_opp_id = o.id
+        LEFT JOIN crm_customer c ON l.customer_id = c.id
+        LEFT JOIN crm_customer oc ON o.customer_id = oc.id
+        LEFT JOIN crm_customer_contact cc ON l.contact_id = cc.id
+        WHERE 1=1
+        <if test="query.leadName != null and query.leadName != ''">
+            AND l.lead_name LIKE CONCAT('%', #{query.leadName}, '%')
+        </if>
+        <if test="query.source != null and query.source != ''">
+            AND l.source = #{query.source}
+        </if>
+        <if test="query.status != null">
+            AND l.status = #{query.status}
+        </if>
+        <if test="query.ownerId != null">
+            AND l.owner_id = #{query.ownerId}
+        </if>
+        <if test="query.company != null and query.company != ''">
+            AND l.company LIKE CONCAT('%', #{query.company}, '%')
+        </if>
+        <if test="query.phone != null and query.phone != ''">
+            AND l.phone LIKE CONCAT('%', #{query.phone}, '%')
+        </if>
+        ORDER BY l.create_time DESC
+    </select>
+
+    <!-- 线索详情查询 -->
+    <select id="selectLeadById" resultType="com.platform.server.crm.lead.vo.LeadVO">
+        SELECT l.id,
+        COALESCE(l.customer_id, o.customer_id) AS customer_id,
+        l.contact_id, l.lead_name, l.source, l.status,
+        l.phone, l.email, l.company, l.description, l.owner_id,
+        l.converted_time, l.converted_opp_id, l.create_time, l.update_time,
+        u.user_name as owner_name,
+        COALESCE(c.customer_name, oc.customer_name) AS customer_name,
+        cc.contact_name,
+        o.opp_name as converted_opp_name
+        FROM crm_lead l
+        LEFT JOIN sys_user u ON l.owner_id = u.id
+        LEFT JOIN crm_opportunity o ON l.converted_opp_id = o.id
+        LEFT JOIN crm_customer c ON l.customer_id = c.id
+        LEFT JOIN crm_customer oc ON o.customer_id = oc.id
+        LEFT JOIN crm_customer_contact cc ON l.contact_id = cc.id
+        WHERE l.id = #{id}
+    </select>
+
+</mapper>
