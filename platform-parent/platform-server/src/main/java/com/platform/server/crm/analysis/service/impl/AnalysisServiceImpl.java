@@ -179,7 +179,7 @@ public class AnalysisServiceImpl implements AnalysisService {
             baseTtlSeconds = 3600,
             ttlOffsetSeconds = 300,
             lockWaitSeconds = 5,
-            lockLeaseSeconds = 30
+            lockLeaseSeconds = -1
     )
     public DashboardVO getDashboard() {
         UserContext userContext = UserContextHolder.getContext();

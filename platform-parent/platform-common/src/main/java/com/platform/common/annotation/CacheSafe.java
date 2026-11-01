@@ -47,8 +47,8 @@ public @interface CacheSafe {
 
     /**
      * 锁持有时间（秒）
-     * 需大于数据库查询耗时
-     * 默认10秒
+     * &gt;0 为固定租约；&lt;=0 启用 Redisson Watchdog 自动续期
+     * 默认 -1（Watchdog），适合耗时不确定的缓存重建
      */
-    long lockLeaseSeconds() default 10;
+    long lockLeaseSeconds() default -1;
 }
